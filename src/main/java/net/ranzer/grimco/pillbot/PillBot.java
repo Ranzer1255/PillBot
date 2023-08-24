@@ -10,7 +10,6 @@ import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.utils.MemberCachePolicy;
 import net.ranzer.grimco.pillbot.config.BotConfiguration;
-import net.ranzer.grimco.pillbot.data.GuildManager;
 import net.ranzer.grimco.pillbot.functions.listeners.CommandListener;
 import net.ranzer.grimco.pillbot.util.Logging;
 import org.jetbrains.annotations.NotNull;

@@ -1,7 +1,15 @@
 package net.ranzer.grimco.pillbot.util;
 
+import java.time.DateTimeException;
+import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeParseException;
+import java.time.zone.ZoneRulesException;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class StringUtil {
 
@@ -120,5 +128,69 @@ public class StringUtil {
 				.append(calcTime(total / 1000));
 
 		return sb.toString();
+	}
+
+	public static ZonedDateTime parseTimeWithTimeZone(String userInput) throws DateTimeParseException,
+	                                                                           ZoneRulesException {
+		// Define a regular expression to match various time formats including time zone
+		String pattern = "(?<hour>[0-9]{1,2}):?(?<minute>[0-9]{2})?(?::?([0-9]{2}))?\\s*(?<ap>[ap]m?\\b)?\\s*(?<tz>[A-Za-z_/\\\\]+)?";
+		Pattern regexPattern = Pattern.compile(pattern, Pattern.CASE_INSENSITIVE);
+		Matcher matcher = regexPattern.matcher(userInput);
+
+		if (matcher.matches()) {
+			int hours = Integer.parseInt(matcher.group("hour"));
+			int minutes = matcher.group("minute")!=null ?Integer.parseInt(matcher.group("minute")) : 0;
+			String amPm = matcher.group("ap");
+			String timeZone = matcher.group("tz");
+
+			if (amPm != null) {
+				if (amPm.toLowerCase().charAt(0)== 'p'&& hours < 12) {
+					hours += 12;
+				} else if (amPm.toLowerCase().charAt(0) == 'a' && hours == 12) {
+					hours = 0;
+				}
+			}
+				// Parse the time
+				LocalTime localTime = LocalTime.of(hours, minutes, 0);
+
+				// If a time zone is provided, create a ZonedDateTime
+				if (timeZone != null) {
+					ZoneId zoneId = ZoneId.of(timeZone);
+					return ZonedDateTime.of(ZonedDateTime.now().toLocalDate(), localTime, zoneId);
+				} else {
+					// If no time zone is provided, use the system's default time zone
+					return ZonedDateTime.of(ZonedDateTime.now().toLocalDate(), localTime, ZoneId.systemDefault());
+				}
+		}
+
+		return null; // Return null if the input doesn't match any valid format
+	}
+
+	public static void main(String[] args) {
+		String[] userInputs = {"6:30 pm", "10:15am US/Mountain", "5p GMT", "2a US/eastern", "22:15", "1:15", "14:30", "10:00 AM US/Central","a;lsdkf"};
+
+		ZoneId.getAvailableZoneIds().stream().sorted().forEach(System.out::println);
+
+		for (String userInput : userInputs) {
+			try {
+				ZonedDateTime parsedTime = parseTimeWithTimeZone(userInput);
+				if (parsedTime != null) {
+					System.out.println("User Input: " + userInput);
+					System.out.println("Parsed Time: " + parsedTime);
+					System.out.println("that is: "+parsedTime.withZoneSameInstant(ZoneId.systemDefault()).toLocalTime() +" Central Time");
+					System.out.println();
+				} else {
+					System.out.println("Error parsing time from: " + userInput);
+				}
+			} catch (ZoneRulesException zre){
+				System.out.println("I'm sorry but i didn't understand the timezone. i got the error \""+zre.getMessage() +
+				                   "\" This is likely caused by Capitalization or a space. the I tried to make the code as user " +
+				                   "friendly as possible, but Java is persnickety about Timezones. Acceptable Timezones include: \n" +
+				                   "America/New_York\n" +
+				                   "US/Central\n" +
+				                   "GMT\n" +
+				                   "UTC+3");
+			}
+		}
 	}
 }

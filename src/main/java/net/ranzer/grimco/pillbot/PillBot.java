@@ -18,6 +18,7 @@ import javax.security.auth.login.LoginException;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 
 /**
  *
@@ -38,13 +39,12 @@ public class PillBot {
 		JDABuilder build;
 
 		//setup intents
-		Collection<GatewayIntent> intents = Arrays.asList(
-			GatewayIntent.GUILD_MEMBERS, //privileged
-			GatewayIntent.DIRECT_MESSAGES,
-			GatewayIntent.GUILD_MESSAGES, //privileged
-			GatewayIntent.GUILD_VOICE_STATES
-		);
-		
+		//			GatewayIntent.GUILD_MEMBERS, //privileged
+		//			GatewayIntent.DIRECT_MESSAGES,
+		//			GatewayIntent.GUILD_MESSAGES, //privileged
+		//			GatewayIntent.GUILD_VOICE_STATES
+		Collection<GatewayIntent> intents = List.of(); //no intents needed
+
 		//set token
 		if (config.isDebug()) {
 			build = JDABuilder.create(config.getTestToken(),intents);
@@ -52,8 +52,8 @@ public class PillBot {
 			build = JDABuilder.create(config.getToken(),intents);
 		}
 
-		build.enableIntents(GatewayIntent.GUILD_MEMBERS);
-		build.setMemberCachePolicy(MemberCachePolicy.ALL);
+//		build.enableIntents(GatewayIntent.GUILD_MEMBERS);
+//		build.setMemberCachePolicy(MemberCachePolicy.ALL);
 
 		//add Listeners
 		build.addEventListeners(new StartUpListener());

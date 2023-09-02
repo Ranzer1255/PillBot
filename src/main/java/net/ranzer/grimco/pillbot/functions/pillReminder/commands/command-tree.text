@@ -1,0 +1,9 @@
+/command <required> (optional)
+
+/add-pill <name> <time> (dosage)
+  * adds pill reminder with <name> at <time>
+/remove-pill <id>
+  * removes <id>.name pill
+  * can only be removed if it's one of <caller>'s reminders
+/list
+  * lists all pills for <caller> by <id>

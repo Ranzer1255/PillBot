@@ -10,6 +10,8 @@ import net.ranzer.grimco.pillbot.commands.BotCommand;
 import net.ranzer.grimco.pillbot.commands.admin.HelpCommand;
 import net.ranzer.grimco.pillbot.commands.admin.InfoCommand;
 import net.ranzer.grimco.pillbot.commands.admin.PingCommand;
+import net.ranzer.grimco.pillbot.functions.pillReminder.commands.AddPillCommand;
+import net.ranzer.grimco.pillbot.functions.pillReminder.commands.ListPillsCommand;
 import net.ranzer.grimco.pillbot.util.Logging;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,7 +31,9 @@ public class CommandListener extends ListenerAdapter {
 	private CommandListener() {
 		this.addCommand(new HelpCommand())
 			.addCommand(new InfoCommand())
-			.addCommand(new PingCommand());
+			.addCommand(new PingCommand())
+			.addCommand(new AddPillCommand())
+			.addCommand(new ListPillsCommand());
 
 		List<CommandData> slashCmds = new ArrayList<>();
 		for (BotCommand cmd : cmds) {

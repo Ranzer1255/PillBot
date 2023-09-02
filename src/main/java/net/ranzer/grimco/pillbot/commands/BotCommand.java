@@ -1,6 +1,7 @@
 package net.ranzer.grimco.pillbot.commands;
 
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData;
 
 import java.util.List;
@@ -38,5 +39,13 @@ public abstract class BotCommand {
 		return String.format("`/%s`",getName());
 	}
 
-	public abstract SlashCommandData getSlashCommandData();
+	public abstract String getShortDescription();
+
+	public Category getCategory(){
+		return Category.PILL;
+	}
+
+	public SlashCommandData getSlashCommandData() {
+		return Commands.slash(getName(), getShortDescription());
+	}
 }

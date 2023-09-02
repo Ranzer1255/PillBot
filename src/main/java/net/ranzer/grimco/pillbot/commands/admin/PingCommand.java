@@ -57,8 +57,4 @@ public class PingCommand extends BotCommand implements  Describable{
 		return true;
 	}
 
-	@Override
-	public SlashCommandData getSlashCommandData() {
-		return Commands.slash(getName(),getShortDescription());
-	}
 }

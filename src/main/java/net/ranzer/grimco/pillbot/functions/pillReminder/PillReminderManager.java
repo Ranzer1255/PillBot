@@ -1,58 +1,104 @@
 package net.ranzer.grimco.pillbot.functions.pillReminder;
 
 import net.dv8tion.jda.api.entities.Member;
-import net.dv8tion.jda.api.entities.TextChannel;
-
-import java.text.DateFormat;
-import java.util.Date;
+import net.dv8tion.jda.api.entities.MessageChannel;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 public class PillReminderManager {
 
+	private final static PillReminderManager instance = new PillReminderManager();
+
+	public static PillReminderManager getInstance(){
+		return instance;
+	}
+
+	private PillReminderManager(){
+		//todo load state from persistent file on load
+	}
 	ScheduledExecutorService ses = Executors.newSingleThreadScheduledExecutor();
 
-	public void schedulePillReminder(PillReminder pr){
+	private Map<UUID,PillReminder> reminders = new HashMap<>();
+
+	public PillReminder schedulePillReminder(PillReminder pr){
+
+		long timeTillFirstRun = ZonedDateTime.now().until(pr.TIME,ChronoUnit.MILLIS);
+		if (timeTillFirstRun<0){
+			timeTillFirstRun += 24*60*60*1000;
+		}
+
+		System.out.println(timeTillFirstRun);
 
 		var pillReminderFuture = ses.scheduleAtFixedRate(
 				pr::makePing,
-		        pr.START_DATE.getTime()-System.currentTimeMillis(),
-				TimeUnit.HOURS.toMillis(pr.INTERVAL_IN_HOURS),
+		        timeTillFirstRun,
+				24*60*60*1000,//24 hours in millis
 				TimeUnit.MILLISECONDS);
+		System.out.println(pillReminderFuture.getDelay(TimeUnit.MILLISECONDS));
 
+		System.out.println(pillReminderFuture);
 		pr.setTimerEvent(pillReminderFuture);
+		reminders.put(pr.id,pr);
+		return pr;
+	}
+
+	public PillReminder schedulePillReminder(String name, ZonedDateTime time, MessageChannel channel, String dose,Member user){
+		PillReminder rtn = new PillReminder(time,name,channel,user,dose);
+
+		return schedulePillReminder(rtn);
 	}
 
 	public void cancelPillReminder(PillReminder pr){
 		pr.getTimerEvent().cancel(true);
+		reminders.remove(pr.id);
+	}
+
+	public void cancelPillReminder(String UUID){
+		cancelPillReminder(reminders.get(java.util.UUID.fromString(UUID)));
+	}
+
+	public List<PillReminder> getPills(Member member) {
+		return reminders.values().stream().filter(pr -> pr.user.equals(member)).collect(Collectors.toList());
 	}
 
 	public static class PillReminder{
-		private Member user;
-		private TextChannel reminderChannel;
-		private String pill;
-		private String dose;
+		public final UUID id = UUID.randomUUID();
+		private final Member user;
+		private final MessageChannel reminderChannel;
+		public final String name;
+		private final String dose;
 
-		final Date START_DATE;
-		final int INTERVAL_IN_HOURS;
+		public final ZonedDateTime TIME;
 
 		private ScheduledFuture<?> timerEvent;
 
-		public PillReminder(Date startDate, int intervalInHours){
-			this.START_DATE = startDate;
-			this.INTERVAL_IN_HOURS = intervalInHours;
+		public PillReminder(ZonedDateTime startTime, String name, MessageChannel channel, Member user,String dose){
+			this.TIME            = startTime;
+			this.name            = name;
+			this.reminderChannel = channel;
+			this.user            = user;
+			this.dose            = dose;
 		}
 
 		public void makePing(){
-			String formatStringWithDose = "%s it's time for your %s dose of %s%s";
+			String formatStringWithDose = "%s it's time for your %s dose of %s";
+
+			System.out.println("trying to run...");
 
 			reminderChannel.sendMessage(
 					String.format(formatStringWithDose,
 					              user.getAsMention(),
-					              DateFormat.getTimeInstance(DateFormat.LONG).format(START_DATE),
-					              dose!=null?pill:pill+": "+dose
+					              TIME.toLocalTime().toString(),
+					              dose!=null? name : name + ": " + dose
 					              )).queue();
 		}
 
@@ -62,6 +108,14 @@ public class PillReminderManager {
 
 		public ScheduledFuture<?> getTimerEvent() {
 			return timerEvent;
+		}
+
+		@Override
+		public String toString() {
+			return String.format("Pill: %s\nReminder Time: %s\nID for removal: %s",
+			                     name,
+			                     TIME.toLocalTime() + " " + TIME.getZone().toString(),
+			                     id);
 		}
 	}
 
